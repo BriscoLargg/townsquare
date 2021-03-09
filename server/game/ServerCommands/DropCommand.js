@@ -1,9 +1,8 @@
 const PublicLocations = new Set(['dead pile', 'discard pile', 'out of game', 'play area']);
-const AbilityContext = require('../AbilityContext');
 const GameActions = require('../GameActions');
 const DiscardCard = require('../GameActions/DiscardCard');
 const ChooseYesNoPrompt = require('../gamesteps/ChooseYesNoPrompt');
-const ShoppinCardAction = require('../PlayActions/ShoppinCardAction');
+const StandardActions = require('../PlayActions/StandardActions');
 
 class DropCommand {
     constructor(game, player, card, targetLocation, gameLocation) {
@@ -26,7 +25,7 @@ class DropCommand {
                     card: this.card, 
                     targetUuid: this.gameLocation, 
                     options: { isCardEffect: false } 
-                }))
+                }));
             }
             return;
         }
@@ -36,18 +35,11 @@ class DropCommand {
         }
 
         if(this.originalLocation !== 'play area' && this.targetLocation === 'play area') {
-            if (this.originalLocation === 'hand' && this.game.currentPhase !== 'setup') {
+            if(this.originalLocation === 'hand' && this.game.currentPhase !== 'setup') {
                 this.game.queueStep(new ChooseYesNoPrompt(this.game, this.player, {
                     title: 'Are you perfoming Shoppin\' play?',
                     onYes: () => {
-                        let shoppingAction = new ShoppinCardAction(this.gameLocation);
-                        let abilityContext = new AbilityContext({ 
-                            ability: shoppingAction,
-                            game: this.game, 
-                            source: this.card, 
-                            player: this.player
-                        });
-                        this.game.resolveAbility(shoppingAction, abilityContext);
+                        this.game.resolveStandardAbility(StandardActions.shoppin(this.gameLocation), this.player, this.card);
                     },
                     onNo: () => this.game.resolveGameAction(GameActions.putIntoPlay({ 
                         player: this.player,
@@ -60,26 +52,18 @@ class DropCommand {
                     player: this.player,
                     card: this.card, 
                     params: { playingType: 'setup', target: this.gameLocation, force: true }
-                }))
+                }));
             }
         } else if(this.targetLocation === 'dead pile' && this.originalLocation === 'play area') {
-            this.game.killCharacter(this.card, { allowSave: false, force: true });
+            this.player.aceCard(this.card, { allowSave: false, force: true });
         } else if(this.targetLocation === 'discard pile' && DiscardCard.allow({ card: this.card, force: true })) {
             this.player.discardCard(this.card, false, { force: true });
         } else {
             this.player.moveCard(this.card, this.targetLocation);
         }
 
-        if (this.game.currentPhase !== 'setup') {
+        if(this.game.currentPhase !== 'setup') {
             this.addGameMessage();
-        }
-    }
-
-    isValidLocation() {
-        if (this.card.getType() === 'dude') {
-
-        } else {
-            return this.originalLocation !== this.targetLocation;
         }
     }
 

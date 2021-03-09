@@ -14,13 +14,14 @@ class DiscardCard extends GameAction {
             card: card,
             allowSave: allowSave,
             originalLocation: card.location,
+            originalGameLocation: card.gamelocation,
             isCardEffect: options.isCardEffect,
             isFromOpponent: options.isFromOpponent,
             isCasualty: options.isCasualty
         };
         return this.event('onCardDiscarded', params, event => {
-            if (event.originalLocation === 'play area' && event.card.bounty) {
-                if ((event.isCardEffect && event.isFromOpponent) || event.isCasualty) {
+            if(event.originalLocation === 'play area' && event.card.bounty) {
+                if((event.isCardEffect && event.isFromOpponent) || event.isCasualty) {
                     event.card.collectBounty(event.card.controller.getOpponent());
                 }
             }

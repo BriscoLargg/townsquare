@@ -15,38 +15,49 @@ class KeywordsProperty {
             'huckster': { printed: null, modifier: 0 },
             'shaman': { printed: null, modifier: 0 },
             'kung fu': { printed: null, modifier: 0 }
-        }
+        };
         this.parseKeywords(keywordsString);
     }
 
     parseKeywords(keywords) {
-        if (keywords === '') {
+        if(keywords === '') {
             return;
         }
 
         var firstLine = keywords.split('\n')[0];
 
-        firstLine.split('\u2022').forEach(keyword => {
-            let results = /([a-z A-Z]+)(\d*)$/.exec(keyword.toLowerCase().trim());  
-            if (results) {
-                this.add(results[1].trim());
-                this.setPrintedValues(results);
-            }
-        });
+        firstLine.split('\u2022').forEach(keyword => this.addKeyword(keyword, true));
     }
 
     setPrintedValues(results) {
         let keywordName = results[1].toLowerCase().trim();
         this.printedData.push(keywordName);   
-        if (isNaN(results[2])) {
+        if(isNaN(results[2])) {
             return;
         }
         let value = parseInt(results[2]);
 
-        if (!this.modifiers[keywordName]) {
+        if(!this.modifiers[keywordName]) {
             this.modifiers['difficulty'].printed = value;
         } else {
             this.modifiers[keywordName].printed = value;
+        }
+    }
+
+    addKeyword(keyword, isPrinted = false) {
+        let results = /([a-z A-Z]+)(\d*)$/.exec(keyword.toLowerCase().trim());  
+        if(results) {
+            this.add(results[1].trim());
+            if(isPrinted) {
+                this.setPrintedValues(results);
+            }
+        }
+    } 
+
+    removeKeyword(keyword) {
+        this.remove(keyword);
+        if(!this.contains(keyword) && this.modifiers[keyword]) {
+            this.modifiers[keyword].modifier = 0;
         }
     }
 
@@ -88,18 +99,16 @@ class KeywordsProperty {
 
     getSkillRating(skillName, printed = false) {
         let skill = this.modifiers[skillName];
-        if (!skill) {
+        if(!skill) {
             return;
         }
-        if (printed) {
+        if(printed) {
             return skill.printed;
-        } else {
-            if (skill.printed + skill.modifier < 0) {
-                return 0;
-            } else {
-                return skill.printed + skill.modifier;
-            }
-        }
+        } 
+        if(skill.printed + skill.modifier < 0) {
+            return 0;
+        } 
+        return skill.printed + skill.modifier;
     }
 
     modifySkillRating(skillName, amount) {
@@ -108,18 +117,16 @@ class KeywordsProperty {
 
     getDifficulty(printed = false) {
         let difficulty = this.modifiers['difficulty'];
-        if (!difficulty) {
+        if(!difficulty) {
             return;
         }
-        if (printed) {
+        if(printed) {
             return difficulty.printed;
-        } else {
-            if (difficulty.printed + difficulty.modifier < 0) {
-                return 0;
-            } else {
-                return difficulty.printed + difficulty.modifier;
-            }
-        }      
+        } 
+        if(difficulty.printed + difficulty.modifier < 0) {
+            return 0;
+        } 
+        return difficulty.printed + difficulty.modifier;
     }
 
     modifyDifficulty(amount) {
@@ -128,24 +135,21 @@ class KeywordsProperty {
 
     getExperienceLevel(printed = false) {
         let experienced = this.modifiers['experienced'];
-        if (!experienced) {
+        if(!experienced) {
             return;
         }
-        if (printed) {
+        if(printed) {
             return experienced.printed;
-        } else {
-            if (experienced.printed + experienced.modifier < 0) {
-                return 0;
-            } else {
-                return experienced.printed + experienced.modifier;
-            }
-        }        
+        } 
+        if(experienced.printed + experienced.modifier < 0) {
+            return 0;
+        } 
+        return experienced.printed + experienced.modifier;
     }
 
     modifyExperienceLevel(amount) {
         this.modifiers['experienced'].modifier += amount;   
     }
-
 }
 
 module.exports = KeywordsProperty;

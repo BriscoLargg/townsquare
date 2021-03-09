@@ -6,9 +6,9 @@ const NullCard = require('./nullcard');
  * Base class representing a location on the game board.
  */
 class GameLocation {
-    constructor(locationCard, neighbourLocation, order) {
-        //Passed in location for construction. Card uuid is main identifier.
-        this.uuid = locationCard.uuid;
+    constructor(game, locationCard, neighbourLocation, order) {
+        this.game = game;
+        this.card = locationCard;
         this.adjacencyMap = new Map();
         /*Keeps track of location order on player street
           for flexbox order parameter info
@@ -17,13 +17,13 @@ class GameLocation {
           <=-1 === left of outfit
         */
         this.order = order;
-        if (neighbourLocation) {
+        if(neighbourLocation) {
             this.addAdjacency(neighbourLocation, 'game');
         }
-        if (order != null) {
-            this.addAdjacency(locationCard.game.townsquare, 'game');
+        if(order !== null && order !== undefined) {
+            this.addAdjacency(this.game.townsquare, 'game');
         }
-        if (locationCard.defaultAdjacencyEffects) {
+        if(locationCard.defaultAdjacencyEffects) {
             locationCard.defaultAdjacencyEffects.forEach(adjacencyEffect => 
                 this.addAdjacency(adjacencyEffect.location, adjacencyEffect.source, adjacencyEffect.type));
         }
@@ -31,48 +31,55 @@ class GameLocation {
         locationCard.gameLocationObject = this;
     }
 
-    getLocationCard(game) {
-        return game.findCardInPlayByUuid(this.uuid);
+    get locationCard() {
+        return this.card;
     }
 
-    determineController(game) {
-        if (this.isTownSquare()) {
+    set locationCard(card) {
+        this.card = card;
+    }
+
+    get uuid() {
+        return this.locationCard.uuid;
+    }
+
+    determineController() {
+        if(this.isTownSquare()) {
             // TODO M2 Harry Highbinder can control townsquare, needs to be implemented
             return;
         }
-        let locationCard = this.getLocationCard(game);
         let playersStats = new Map();
-        let originalController = locationCard.controllingPlayer;
-        let playerWithMost = locationCard.owner;
-        let currentController = locationCard.owner;
-        let defaultDeterminator = locationCard.controlDeterminator;
-        playersStats.set(locationCard.owner.name, 0);
-        playersStats.set(locationCard.controllingPlayer.name, 0);
+        let originalController = this.locationCard.controllingPlayer;
+        let playerWithMost = this.locationCard.owner;
+        let currentController = this.locationCard.owner;
+        let defaultDeterminator = this.locationCard.controlDeterminator;
+        playersStats.set(this.locationCard.owner.name, 0);
+        playersStats.set(this.locationCard.controllingPlayer.name, 0);
         this.occupants.forEach(dudeUuid => {
-            let dude = game.findCardInPlayByUuid(dudeUuid);
+            let dude = this.game.findCardInPlayByUuid(dudeUuid);
             let determinator = defaultDeterminator;
-            if (dude.controlDeterminator !== 'influence:deed') {
+            if(dude.controlDeterminator !== 'influence:deed') {
                 determinator = dude.controlDeterminator;
             }
             let amount = dude.getStat(determinator);
-            if (amount > 0) {
+            if(amount > 0) {
                 let currentAmount = playersStats.get(dude.controller.name) || 0;
                 playersStats.set(dude.controller.name, currentAmount + amount);
-                if (dude.controller.name === playerWithMost.name) {
+                if(dude.controller.name === playerWithMost.name) {
                     currentController = dude.controller;
-                } else if (playersStats.get(dude.controller.name) > playersStats.get(playerWithMost.name)) {
+                } else if(playersStats.get(dude.controller.name) > playersStats.get(playerWithMost.name)) {
                     playerWithMost = dude.controller;
                     currentController = dude.controller;
-                } else if (playersStats.get(dude.controller.name) == playersStats.get(playerWithMost.name)) {
-                    currentController = locationCard.owner;
+                } else if(playersStats.get(dude.controller.name) === playersStats.get(playerWithMost.name)) {
+                    currentController = this.locationCard.owner;
                 }
             }
         });
-        if (currentController !== originalController) {
-            if (currentController !== locationCard.owner) {
-                game.addAlert('info', '{0} broke into {1} and has taken control from the {2}.', currentController, locationCard, originalController);
+        if(currentController !== originalController) {
+            if(currentController !== this.locationCard.owner) {
+                this.game.addAlert('info', '{0} broke into {1} and has taken control from the {2}.', currentController, this.locationCard, originalController);
             } else {
-                game.addAlert('info', '{0} has wrestled control of {1} back from {2}.', currentController, locationCard, originalController);
+                this.game.addAlert('info', '{0} has wrestled control of {1} back from {2}.', currentController, this.locationCard, originalController);
             }
         }
         return currentController;
@@ -80,11 +87,11 @@ class GameLocation {
 
     isAdjacent(uuid) {
         let adjacency = this.adjacencyMap.get(uuid);
-        if (!adjacency) {
+        if(!adjacency) {
             return false;
         }
 
-        if (adjacency[0].type === 'adjacent') {
+        if(adjacency[0].type === 'adjacent') {
             return true;
         }
     }
@@ -94,18 +101,17 @@ class GameLocation {
     }
 
     isHome(player) {
-        let locationCard = this.getLocationCard(player.game);
-        return locationCard && locationCard.getType() === 'outfit' && locationCard.owner == player;
+        return this.locationCard && this.locationCard.getType() === 'outfit' && this.locationCard.owner === player;
     }
 
     addAdjacency(location, source, type = 'adjacent') {
         this.attach(location.uuid, source, type);
-        location.attach(this.uuid, source, type);
+        location.attach(this.locationCard.uuid, source, type);
     }
 
     removeAdjacency(location, source, type = 'adjacent') {
         this.detach(location.uuid, source, type);
-        location.detach(this.uuid, source, type);
+        location.detach(this.locationCard.uuid, source, type);
     }
 
     attach(uuid, source, type) {
@@ -116,11 +122,11 @@ class GameLocation {
 
     detach(uuid, source, type) {
         let adjacency = this.adjacencyMap.get(uuid);
-        if (!adjacency) {
+        if(!adjacency) {
             return;
         }
-        adjacency = adjacency.filter(adjItem => adjItem.source !== source && adjItem.type != type);
-        if (adjacency.length === 0) {
+        adjacency = adjacency.filter(adjItem => adjItem.source !== source && adjItem.type !== type);
+        if(adjacency.length === 0) {
             this.adjacencyMap.delete(uuid);
         } else {
             this.adjacencyMap.set(uuid, adjacency);
@@ -131,7 +137,7 @@ class GameLocation {
         if(!card || card.getType() !== 'dude') {
             return;
         }
-        card.updateGameLocation(this.uuid);
+        card.updateGameLocation(this.locationCard.uuid);
         this.occupants.push(card.uuid);
     }
 
@@ -142,7 +148,6 @@ class GameLocation {
         card.gamelocation = null;
         this.occupants = _.reject(this.occupants, c => c === card.uuid);
     }
-
 }
 
 /**
@@ -151,10 +156,16 @@ class GameLocation {
  * central game flex box
  */
 class TownSquare extends GameLocation {
-    constructor() {
+    constructor(game) {
         // TODO M2 probably will have to create town square card since it is possible to
         // attach to town square
-        super({ uuid: TownSquareUUID}, null, null);
+        super(game, Object.assign(new NullCard(), {
+            title: 'Town Square', 
+            uuid: TownSquareUUID,
+            getType: () => 'townsquare',
+            getLocation: () => this,
+            gamelocation: 'townsquare'
+        }), null, null);
 
         this.key = 'townsquare';
     }
@@ -164,7 +175,7 @@ class TownSquare extends GameLocation {
     }
 
     north() {
-        for(var [key,value] of this.adjacencyMap.entries()) {
+        for(var [key, value] of this.adjacencyMap.entries()) {
             if(value === 'north') {
                 return key;
             }
@@ -172,25 +183,15 @@ class TownSquare extends GameLocation {
     }
 
     south() {
-        for(var [key,value] of this.adjacencyMap.entries()) {
+        for(var [key, value] of this.adjacencyMap.entries()) {
             if(value === 'south') {
                 return key;
             }
         }
     }
-
-    getLocationCard() {
-        return Object.assign(new NullCard(), {
-            title: 'Town Square', 
-            uuid: this.uuid,
-            getType: () => 'townsquare',
-            getLocation: () => this
-        });
-    }
 }
-
 
 module.exports = {
     GameLocation: GameLocation,
     TownSquare: TownSquare
-}
+};

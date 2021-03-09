@@ -13,10 +13,9 @@ class TriggeredAbility extends BaseAbility {
         this.eventType = eventType;
         this.location = this.buildLocation(card, properties.location);
 
-        if(card.getPrintedType() === 'action' && !properties.ignoreEventCosts) {
+        if(card.getType() === 'action' && !properties.ignoreEventCosts) {
             this.cost = this.cost.concat(Costs.playAction());
         }
-
     }
 
     isTriggeredAbility() {
@@ -25,12 +24,10 @@ class TriggeredAbility extends BaseAbility {
 
     buildLocation(card, location) {
         const DefaultLocationForType = {
-            event: 'hand',
-            agenda: 'agenda',
-            plot: 'active plot'
+            action: 'hand'
         };
 
-        let defaultedLocation = location || DefaultLocationForType[card.getPrintedType()] || ['play area'];
+        let defaultedLocation = location || DefaultLocationForType[card.getType()] || ['play area'];
 
         if(!Array.isArray(defaultedLocation)) {
             return [defaultedLocation];
@@ -78,7 +75,7 @@ class TriggeredAbility extends BaseAbility {
     meetsRequirements(context) {
         let isPlayableActionAbility = this.isPlayableActionAbility();
 
-        if(this.game.currentPhase === 'setup') {
+        if(this.game.currentPhase === 'setup' && !this.card.hasKeyword('grifter')) {
             return false;
         }
 
@@ -118,18 +115,15 @@ class TriggeredAbility extends BaseAbility {
         // game events in all open information locations plus while in hand.
         // The location property of the ability will prevent it from firing in
         // inappropriate locations when requirements are checked for the ability.
-        //
-        // Also apparently the draw deck because of Maester Gormon.
-        // Also also apparently under conclave due to Archmaester Marwyn.
         if(this.isPlayableActionAbility()) {
-            return ['conclave', 'discard pile', 'draw deck', 'hand', 'shadows', 'play area'].includes(location);
+            return ['discard pile', 'draw deck', 'hand', 'play area'].includes(location);
         }
 
         return this.location.includes(location);
     }
 
     isPlayableActionAbility() {
-        return this.card.getPrintedType() === 'event' && this.location.includes('hand');
+        return this.card.getType() === 'action' && this.location.includes('hand');
     }
 
     incrementLimit() {

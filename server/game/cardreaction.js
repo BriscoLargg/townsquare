@@ -10,14 +10,21 @@ class CardReaction extends PromptedTriggeredAbility {
     executeHandler(context) {
         super.executeHandler(context);
         this.usage.increment();
+        if(this.card.hasKeyword('grifter')) {
+            this.card.controller.availableGrifterActions -= 1;
+        }
     }
 
     meetsRequirements(context) {
-        if (!super.meetsRequirements(context)) {
+        if(!super.meetsRequirements(context)) {
             return false;
         }
     
-        if (this.game.shootout && this.game.shootout.headlineUsed && this.card.hasKeyword('headline')) {
+        if(this.game.shootout && this.game.shootout.headlineUsed && this.card.hasKeyword('headline')) {
+            return false;
+        }
+
+        if(this.card.hasKeyword('grifter') && this.card.controller.availableGrifterActions === 0) {
             return false;
         }
 
@@ -31,7 +38,6 @@ class CardReaction extends PromptedTriggeredAbility {
     playTypePlayed() {
         return 'react';
     }
-
 }
 
 module.exports = CardReaction;

@@ -1,7 +1,8 @@
 const AbilityTargetMessages = require('./AbilityTargetMessages');
 const AbilityChoiceSelection = require('./AbilityChoiceSelection');
-const CardSelector = require('./CardSelector.js');
+const CardSelector = require('./CardSelector');
 const Messages = require('./Messages');
+const BaseCardSelector = require('./CardSelectors/BaseCardSelector');
 
 class AbilityTarget {
     static create(name, properties) {
@@ -24,7 +25,7 @@ class AbilityTarget {
         this.selector = CardSelector.for(properties);
         this.messages = properties.messages;
         this.ifAble = !!properties.ifAble;
-        this.autoSelect = properties.autoSelect === null ? true : properties.autoSelect;
+        this.autoSelect = properties.autoSelect || properties.autoSelect === false ? properties.autoSelect : false;
         this.activePromptTitle = properties.activePromptTitle;
         this.cardType = properties.cardType || [];
     }
@@ -72,7 +73,7 @@ class AbilityTarget {
         }
 
         if(this.choosingPlayer === 'thisIfLegal') {
-            if (!context.player.isCheatin()) {
+            if(!context.player.isCheatin()) {
                 return [context.player];
             }
             return [context.player.getOpponent()];
@@ -85,6 +86,25 @@ class AbilityTarget {
         context.choosingPlayer = result.choosingPlayer;
         context.currentTargetSelection = result;
 
+        if(BaseCardSelector.isAllowedSpecialTarget(this.cardType)) {
+            switch(this.cardType) {
+                case 'townsquare':
+                    result.resolve(context.game.townsquare.locationCard); 
+                    this.messages.outputSelected(context.game, context);
+                    return;
+                case 'currentHome':
+                    result.resolve(context.choosingPlayer.getOutfitCard()); 
+                    this.messages.outputSelected(context.game, context);
+                    return;
+                case 'location':
+                    break;
+                default:
+                    this.messages.outputUnable(context.game, context);
+                    result.reject();
+                    return;
+            }
+        }
+
         let unableToSelect = !this.selector.hasEnoughTargets(context) || this.selector.optional && result.hasNoChoices();
         if(this.ifAble && unableToSelect) {
             this.messages.outputUnable(context.game, context);
@@ -92,8 +112,8 @@ class AbilityTarget {
             return;
         }
         let buttons = [];
-        if (this.cardType.includes('location') || this.cardType.includes('townsquare')) {
-            buttons = [ { text: 'Town Square' } ];
+        if(this.cardType.includes('location') || this.cardType.includes('townsquare')) {
+            buttons = [{ text: 'Town Square' }];
             this.activePromptTitle = this.activePromptTitle || 'Select target location for movement';
             // TODO M2 probably should add condition for location that will filter current location
             //this.cardCondition = 
@@ -129,7 +149,7 @@ class AbilityTarget {
                 return true;
             },
             onMenuCommand: () => {
-                result.resolve(context.game.townsquare.getLocationCard()); 
+                result.resolve(context.game.townsquare.locationCard); 
                 this.messages.outputSelected(context.game, context);
                 return true;               
             }

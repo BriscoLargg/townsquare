@@ -34,13 +34,14 @@ describe('Effect', function() {
             effect: this.effectDefinition
         };
 
+        this.allowGameProperties = { game: this.gameSpy, source: this.sourceSpy, ability: undefined, resolutionStage: 'effect' };
         this.properties.match.and.returnValue(true);
 
         this.effect = new Effect(this.gameSpy, this.sourceSpy, this.properties);
     });
 
-    it('defaults to targeting both play area and active plot', function() {
-        expect(this.effect.targetLocation).toEqual(['play area', 'active plot']);
+    it('defaults to targeting play area', function() {
+        expect(this.effect.targetLocation).toEqual(['play area']);
     });
 
     describe('addTargets()', function() {
@@ -70,7 +71,7 @@ describe('Effect', function() {
                 });
 
                 it('should apply the effect to the matching card', function() {
-                    expect(this.effectDefinition.apply).toHaveBeenCalledWith(this.matchingCard, { game: this.gameSpy, source: this.sourceSpy });
+                    expect(this.effectDefinition.apply).toHaveBeenCalledWith(this.matchingCard, this.allowGameProperties);
                     expect(this.effectDefinition.apply).not.toHaveBeenCalledWith(this.nonMatchingCard, jasmine.any(Object));
                 });
             });
@@ -107,7 +108,7 @@ describe('Effect', function() {
             });
 
             it('should apply the effect to the matching card', function() {
-                expect(this.effectDefinition.apply).toHaveBeenCalledWith(this.matchingCard, { game: this.gameSpy, source: this.sourceSpy });
+                expect(this.effectDefinition.apply).toHaveBeenCalledWith(this.matchingCard, this.allowGameProperties);
                 expect(this.effectDefinition.apply).not.toHaveBeenCalledWith(this.nonMatchingCard, jasmine.any(Object));
             });
         });
@@ -427,7 +428,7 @@ describe('Effect', function() {
             });
 
             it('should unapply the effect', function() {
-                expect(this.effectDefinition.unapply).toHaveBeenCalledWith(this.target, { game: this.gameSpy, source: this.sourceSpy });
+                expect(this.effectDefinition.unapply).toHaveBeenCalledWith(this.target, this.allowGameProperties);
             });
         });
     });
@@ -451,7 +452,7 @@ describe('Effect', function() {
                 });
 
                 it('should unapply the effect from existing targets', function() {
-                    expect(this.effectDefinition.unapply).toHaveBeenCalledWith(this.target, { game: this.gameSpy, source: this.sourceSpy });
+                    expect(this.effectDefinition.unapply).toHaveBeenCalledWith(this.target, this.allowGameProperties);
                 });
 
                 it('should not apply the effect to anything', function() {
@@ -523,7 +524,7 @@ describe('Effect', function() {
                 });
 
                 it('should apply the effect to new targets', function() {
-                    expect(this.effectDefinition.apply).toHaveBeenCalledWith(this.newTarget, { game: this.gameSpy, source: this.sourceSpy });
+                    expect(this.effectDefinition.apply).toHaveBeenCalledWith(this.newTarget, this.allowGameProperties);
                 });
 
                 it('should add new targets', function() {
@@ -541,7 +542,7 @@ describe('Effect', function() {
         });
 
         it('should unapply the effect from existing targets', function() {
-            expect(this.effectDefinition.unapply).toHaveBeenCalledWith(this.target, { game: this.gameSpy, source: this.sourceSpy });
+            expect(this.effectDefinition.unapply).toHaveBeenCalledWith(this.target, this.allowGameProperties);
         });
 
         it('should remove all targets', function() {

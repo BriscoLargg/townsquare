@@ -6,6 +6,7 @@ const GoodsCard = require('./goodscard');
 const SpellCard = require('./spellcard.js');
 const ActionCard = require('./actioncard.js');
 const OutfitCard = require('./outfitcard');
+const JokerCard = require('./jokercard');
 
 class Deck {
     constructor(data) {
@@ -13,7 +14,6 @@ class Deck {
     }
 
     createOutfitCard(player) {
-
         let cardData = { type: 'outfit' };
         if(this.data.outfit) {
             cardData = {
@@ -31,14 +31,14 @@ class Deck {
         return new cardClass(player, cardData);
     }
 
-    createLegendCard(player) {
+    createLegendCard() {
         // TODO M2 Legend card not created
 
         return;
     }
 
     isDrawCard(cardData) {
-        return ['goods', 'spell', 'dude', 'deed', 'action'].includes(cardData.type_code);
+        return ['goods', 'spell', 'dude', 'deed', 'action', 'joker'].includes(cardData.type_code);
     }
 
     prepare(player) {
@@ -93,20 +93,23 @@ class Deck {
         let cardClass = baseClass;
 
         // maybe do it the same way as cards (card type js files in folder)
-        if (cardData.type_code === 'dude') {
+        if(cardData.type_code === 'dude') {
             cardClass = DudeCard;
         }
-        if (cardData.type_code === 'deed') {
+        if(cardData.type_code === 'deed') {
             cardClass = DeedCard;
         }
-        if (cardData.type_code === 'goods') {
+        if(cardData.type_code === 'goods') {
             cardClass = GoodsCard;
         }
-        if (cardData.type_code === 'spell') {
+        if(cardData.type_code === 'spell') {
             cardClass = SpellCard;
         }
-        if (cardData.type_code === 'action') {
+        if(cardData.type_code === 'action') {
             cardClass = ActionCard;
+        }
+        if(cardData.type_code === 'joker') {
+            cardClass = JokerCard;
         }
 
         cardClass = cards[cardData.code] || cardClass;
@@ -120,7 +123,6 @@ class Deck {
             drawCard.moveTo('draw deck');
             return drawCard;
         }
-
     }
 }
 

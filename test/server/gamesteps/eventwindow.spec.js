@@ -20,7 +20,7 @@ describe('EventWindow', function() {
                 expect(this.gameSpy.openAbilityWindow).toHaveBeenCalledWith({ abilityType: 'forcedinterrupt', event: this.eventSpy });
                 expect(this.gameSpy.openAbilityWindow).toHaveBeenCalledWith({ abilityType: 'interrupt', event: this.eventSpy });
                 expect(this.eventSpy.emitTo).toHaveBeenCalledWith(this.gameSpy);
-                expect(this.gameSpy.openAbilityWindow).toHaveBeenCalledWith({ abilityType: 'forcedreaction', event: this.eventSpy });
+                expect(this.gameSpy.openAbilityWindow).toHaveBeenCalledWith({ abilityType: 'traitreaction', event: this.eventSpy });
                 expect(this.gameSpy.openAbilityWindow).toHaveBeenCalledWith({ abilityType: 'reaction', event: this.eventSpy });
             });
 
@@ -41,36 +41,16 @@ describe('EventWindow', function() {
 
             it('should not attempt to cancel any non-automatic-save event', function() {
                 this.eventWindow.continue();
-
-                expect(this.gameSpy.saveWithDupe).not.toHaveBeenCalledWith(this.eventSpy.card);
                 expect(this.eventSpy.cancel).not.toHaveBeenCalled();
-            });
-
-            it('should attempt to save the automatic-save event', function() {
-                this.eventWindow.continue();
-
-                expect(this.gameSpy.saveWithDupe).toHaveBeenCalledWith(this.concurrentEventSpy.card);
             });
 
             describe('when the card cannot be saved with a dupe', function() {
                 beforeEach(function() {
-                    this.gameSpy.saveWithDupe.and.returnValue(false);
                     this.eventWindow.continue();
                 });
 
                 it('should not cancel the automatic-save event', function() {
                     expect(this.concurrentEventSpy.cancel).not.toHaveBeenCalled();
-                });
-            });
-
-            describe('when the card can be saved with a dupe', function() {
-                beforeEach(function() {
-                    this.gameSpy.saveWithDupe.and.returnValue(true);
-                    this.eventWindow.continue();
-                });
-
-                it('should cancel the automatic-save event', function() {
-                    expect(this.concurrentEventSpy.cancel).toHaveBeenCalled();
                 });
             });
         });
@@ -85,7 +65,7 @@ describe('EventWindow', function() {
                 expect(this.gameSpy.openAbilityWindow).not.toHaveBeenCalledWith({ abilityType: 'forcedinterrupt', event: this.eventSpy });
                 expect(this.gameSpy.openAbilityWindow).not.toHaveBeenCalledWith({ abilityType: 'interrupt', event: this.eventSpy });
                 expect(this.eventSpy.emitTo).not.toHaveBeenCalled();
-                expect(this.gameSpy.openAbilityWindow).not.toHaveBeenCalledWith({ abilityType: 'forcedreaction', event: this.eventSpy });
+                expect(this.gameSpy.openAbilityWindow).not.toHaveBeenCalledWith({ abilityType: 'traitreaction', event: this.eventSpy });
                 expect(this.gameSpy.openAbilityWindow).not.toHaveBeenCalledWith({ abilityType: 'reaction', event: this.eventSpy });
             });
 

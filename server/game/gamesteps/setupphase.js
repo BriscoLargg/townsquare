@@ -1,8 +1,6 @@
 const Phase = require('./phase.js');
 const SimpleStep = require('./simplestep.js');
 const StartingPossePrompt = require('./setup/startingposseprompt.js');
-const GrifterPrompt = require('./setup/grifterprompt.js');
-const { StartingHandSize } = require('../Constants');
 
 class SetupPhase extends Phase {
     constructor(game) {
@@ -18,9 +16,7 @@ class SetupPhase extends Phase {
             new SimpleStep(game, () => this.startGame()),
             new SimpleStep(game, () => this.announceSetupCards()),
             new SimpleStep(game, () => game.raiseEvent('onSetupFinished')),
-            new SimpleStep(game, () => game.activatePersistentEffects()),
-            // TODO M2 Shootout testing - comment out GrifterPrompt
-            new GrifterPrompt(game)
+            new SimpleStep(game, () => game.activatePersistentEffects())
         ]);
     }
 
@@ -46,7 +42,7 @@ class SetupPhase extends Phase {
         for(const card of this.game.allCards) {
             card.applyAnyLocationPersistentEffects();
 
-            if(card.getType() === 'agenda') {
+            if(card.getType() === 'legend') {
                 card.applyPersistentEffects();
             }
         }
@@ -72,7 +68,6 @@ class SetupPhase extends Phase {
             this.game.addMessage('{0} has following starting dudes: {1}.', player, dudes);
         }
     }
-
 }
 
 module.exports = SetupPhase;
